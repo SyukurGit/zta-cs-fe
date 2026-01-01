@@ -27,13 +27,21 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // Opsional: Redirect ke login jika token expired
-      // window.location.href = '/login';
+    const status = error.response?.status;
+    const url = error.config?.url;
+
+    // ❗ Abaikan 401 dari /login
+    if (status === 401 && !url?.includes('/login')) {
       console.error("Session expired or unauthorized");
+
+      // optional:
+      // localStorage.removeItem('token');
+      // window.location.href = '/login';
     }
+
     return Promise.reject(error);
   }
 );
+
 
 export default api;

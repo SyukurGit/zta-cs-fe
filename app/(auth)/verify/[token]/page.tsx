@@ -9,10 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/ca
 import { ShieldCheck, ShieldAlert, LockKeyhole, CheckCircle2 } from 'lucide-react';
 
 interface Question {
-  ID: number;
-  Category: string;
-  QuestionText: string;
+  id: number;
+  category: string;
+  question: string;
 }
+
 
 export default function VerificationPage() {
   const params = useParams();
@@ -162,22 +163,19 @@ export default function VerificationPage() {
                 </div>
               )}
 
-              {questions.map((q, index) => (
-                <div key={q.ID} className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-800">
-                    {index + 1}. {q.QuestionText}
-                  </label>
-                  <Input 
-                    type="text"
-                    placeholder="Ketik jawaban Anda..."
-                    value={answers[q.ID] || ''}
-                    onChange={(e) => handleInputChange(q.ID, e.target.value)}
-                    required
-                    className="focus:ring-blue-500"
-                    autoComplete="off"
-                  />
-                </div>
-              ))}
+             {questions.map((q, index) => (
+  <div key={q.id}>
+    <label>
+      {index + 1}. {q.question}
+    </label>
+    <Input
+      value={answers[q.id] || ''}
+      onChange={(e) => handleInputChange(q.id, e.target.value)}
+    />
+  </div>
+))}
+
+
 
               <Button 
                 type="submit" 

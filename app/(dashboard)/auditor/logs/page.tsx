@@ -29,7 +29,7 @@ export default function AuditorLogs() {
     const fetchLogs = async () => {
       try {
         const res = await api.get('/api/auditor/logs');
-        setLogs(res.data || []);
+        setLogs(res.data.data || []);
       } catch (err) {
         console.error("Failed logs", err);
       } finally {
