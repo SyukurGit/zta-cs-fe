@@ -47,7 +47,7 @@ export default function CSMyWorkspacePage() {
              <Card 
                key={ticket.ID} 
                className="cursor-pointer hover:shadow-lg hover:border-blue-400 transition-all border-t-4 border-t-blue-500"
-               onClick={() => router.push(`/cs/dashboard/ticket/${ticket.ID}`)}
+               onClick={() => router.push(`/cs/my-tickets/ticket/${ticket.ID}`)}
              >
                <CardContent className="p-6">
                  <div className="flex justify-between items-start mb-4">

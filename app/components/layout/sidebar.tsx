@@ -38,8 +38,11 @@ export function Sidebar() {
 
   const menuItems: Record<string, MenuItem[]> = {
     CS: [
-      { href: '/cs/dashboard', label: 'Ticket Queue', icon: Inbox },
-      { href: '/cs/my-tickets', label: 'My Workspace', icon: Briefcase },
+      // { href: '/cs/dashboard', label: 'Ticket Queue', icon: Inbox },
+            { href: '/cs/dashboard', label: 'Dashboard', icon: LayoutDashboard }, // Dashboard Statistik
+      { href: '/cs/pool', label: 'Ticket Pool', icon: Inbox },
+
+      { href: '/cs/my-tickets', label: 'Workspace', icon: Briefcase },
       { href: '/cs/history', label: 'Resolution History', icon: History },
     ],
     USER: [
