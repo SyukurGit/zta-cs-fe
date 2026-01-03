@@ -26,18 +26,28 @@ export default function AuditorLogs() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchLogs = async () => {
-      try {
-        const res = await api.get('/api/auditor/logs');
-        setLogs(res.data.data || []);
-      } catch (err) {
-        console.error("Failed logs", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchLogs();
-  }, []);
+  const fetchLogs = async () => {
+    try {
+      const res = await api.get('/api/auditor/logs');
+      
+      console.log("🔥 DATA DARI BACKEND:", res.data);
+
+      // Gunakan logData untuk menampung hasil pengecekan array
+      const logData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      
+      // SET MENGGUNAKAN logData, BUKAN res.data
+      setLogs(logData); 
+
+    } catch (err) {
+      console.error("Failed logs", err);
+      setLogs([]); 
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  fetchLogs();
+}, []);
+
 
   return (
     <div className="space-y-6">
