@@ -1,4 +1,4 @@
-// app/(auth)/login/page.tsx
+// app/(auth)/user-login/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -8,10 +8,10 @@ import api from '@/app/lib/axios';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/app/components/ui/card';
-import { AlertCircle, ShieldCheck } from 'lucide-react';
+import { AlertCircle, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 
-export default function StaffLoginPage() {
+export default function UserLoginPage() {
   const router = useRouter();
   const { login } = useAuthStore();
   
@@ -28,47 +28,39 @@ export default function StaffLoginPage() {
       const res = await api.post('/login', formData);
       const { token, role } = res.data;
 
-      // --- LOGIC PENGECEKAN: TOLAK USER ---
-      if (role === 'USER') {
-        setError('Akun User tidak diizinkan masuk lewat portal Staff.');
+      // --- LOGIC PENGECEKAN ROLE KHUSUS USER ---
+      if (role !== 'USER') {
+        setError('Portal ini khusus User. Staff silakan login di halaman Staff.');
         setIsLoading(false);
         return;
       }
 
-      // Set Cookies untuk Middleware
+      // Simpan Cookie untuk Middleware
       document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Strict`;
       document.cookie = `role=${role}; path=/; max-age=86400; SameSite=Strict`;
 
+      // Simpan State Global
       login(token, role);
 
-      // Routing khusus Staff
-      switch (role) {
-        case 'CS':
-          router.push('/cs/dashboard');
-          break;
-        case 'AUDITOR':
-          router.push('/auditor/logs');
-          break;
-        default:
-          setError('Role tidak dikenali.');
-      }
+      // Redirect ke User Dashboard
+      router.push('/user/dashboard');
+
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Gagal login. Cek kredensial Anda.');
+      setError(err.response?.data?.error || 'Gagal login. Cek email/password.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
-      {/* Visual dibedakan (Dark theme/Slate) agar terlihat seperti portal admin */}
-      <Card className="w-full max-w-md border-t-4 border-t-indigo-500 shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-blue-50 p-4">
+      <Card className="w-full max-w-md border-t-4 border-t-blue-500 shadow-lg">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-900">
-             <ShieldCheck size={24} />
+          <div className="mx-auto mb-2 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+             <UserCheck size={24} />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">ZTA Staff Portal</h1>
-          <p className="text-sm text-slate-500">Restricted Area: CS & Auditor Only</p>
+          <h1 className="text-2xl font-bold text-slate-900">User Helpdesk</h1>
+          <p className="text-sm text-slate-500">Masuk untuk membuat tiket bantuan</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -80,10 +72,10 @@ export default function StaffLoginPage() {
             )}
             
             <div className="space-y-2">
-              <label className="text-sm font-medium">Staff Email</label>
+              <label className="text-sm font-medium">Email User</label>
               <Input 
                 type="email" 
-                placeholder="staff@zta-corp.com"
+                placeholder="user@gmail.com"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
                 required
@@ -94,19 +86,18 @@ export default function StaffLoginPage() {
               <label className="text-sm font-medium">Password</label>
               <Input 
                 type="password" 
-                placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
                 required
               />
             </div>
 
-            <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800" disabled={isLoading}>
-              {isLoading ? 'Verifying...' : 'Authenticate'}
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+              {isLoading ? 'Masuk...' : 'Masuk sebagai User'}
             </Button>
-            
+
             <div className="text-center text-xs text-slate-400 mt-4">
-               User biasa? <Link href="/user-login" className="text-blue-600 underline">Login di Portal User</Link>
+               Staff atau CS? <Link href="/login" className="text-blue-600 underline">Login di sini</Link>
             </div>
           </form>
         </CardContent>

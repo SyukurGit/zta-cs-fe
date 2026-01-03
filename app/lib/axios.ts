@@ -1,7 +1,8 @@
+// app/lib/axios.ts
 import axios from 'axios';
 
-// Ganti sesuai URL backend Go-mu
-const BASE_URL = 'http://localhost:8080'; 
+// Gunakan Env Variable, fallback ke localhost jika tidak ada
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'; 
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -10,9 +11,10 @@ const api = axios.create({
   },
 });
 
-// Interceptor: Setiap mau request, cek ada token nggak di penyimpanan lokal?
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
+    // Note: Nanti kita akan migrasi ke Cookie untuk Middleware, 
+    // tapi untuk sekarang kita dukung keduanya (localStorage/Cookie) jika perlu.
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -23,25 +25,18 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-// Interceptor: Kalau response 401 (Unauthorized), lempar keluar (Logout)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
     const url = error.config?.url;
 
-    // ❗ Abaikan 401 dari /login
     if (status === 401 && !url?.includes('/login')) {
       console.error("Session expired or unauthorized");
-
-      // optional:
-      // localStorage.removeItem('token');
-      // window.location.href = '/login';
+      // Kita biarkan logic logout di handle komponen atau store
     }
-
     return Promise.reject(error);
   }
 );
-
 
 export default api;
