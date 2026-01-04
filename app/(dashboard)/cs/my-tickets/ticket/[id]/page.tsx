@@ -73,16 +73,22 @@ export default function CSTicketWorkspace() {
     }
   };
 
-  const handleGenerateResetLink = async () => {
+ const handleGenerateResetLink = async () => {
     setLoadingAction('RESET');
     setActionError(null);
     try {
       const res = await api.post(`/api/cs/tickets/${ticketId}/reset-password`);
-      const link = res.data; 
       
+      // FIX: Extract the link from the JSON response
+      // Backend returns: { "status": "...", "message": "...", "new_user_password": "http://...", "info": "..." }
+      const link = res.data.new_user_password; 
+
       await api.post(`/api/cs/tickets/${ticketId}/chat`, {
         message: `✅ Identitas Terverifikasi. Silakan gunakan link berikut untuk mengatur ulang password Anda (Berlaku 10 Menit): \n\n${link}`
       });
+      
+      // Update local state if needed, though strictly not used for the chat itself
+      // setResetLink(link); 
 
       queryClient.invalidateQueries({ queryKey: ['ticket-logs', ticketId] });
     } catch (err: any) {

@@ -10,11 +10,11 @@ import { Send, User, Headset, MessageSquare, XCircle, LockKeyhole } from 'lucide
 import { cn } from '@/app/lib/utils';
 import { useAuthStore } from '@/app/store/useAuthStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Ticket } from '@/types'; // Pastikan import tipe Ticket
+import { Ticket } from '@/types'; 
 
 interface ChatMessage {
   ID: number;
-  SenderRole: 'USER' | 'CS' | 'SYSTEM'; // Tambahkan SYSTEM untuk style pesan khusus
+  SenderRole: 'USER' | 'CS' | 'SYSTEM'; 
   Message: string;
   CreatedAt: string;
 }
@@ -36,20 +36,10 @@ export function ChatInterface({ ticketId, className }: ChatInterfaceProps) {
     : `/api/user/tickets/${ticketId}/chat`;
 
   // --- 1. QUERY TIKET DETAIL (Untuk cek Status Realtime) ---
-  // Kita perlu ini untuk mematikan input jika tiket CLOSED oleh lawan bicara
   const { data: ticket } = useQuery<Ticket>({
     queryKey: ['ticket-detail', ticketId],
     queryFn: async () => {
-       // Sesuaikan endpoint get detail tiket masing-masing role
-       // User: GET /api/user/tickets/:id (Perlu bikin endpoint khusus detail kalau belum ada, atau pakai list filter)
-       // CS: GET /api/cs/tickets/:id (biasanya ada endpoint detail)
-       // WORKAROUND: Jika belum ada endpoint detail spesifik JSON, kita bisa pakai endpoint list atau asumsi status dari error chat
-       
-       // SEMENTARA: Kita gunakan endpoint list/detail yang sudah ada di Dashboard logic
-       // Disarankan backend punya endpoint: GET /api/(user|cs)/tickets/:id yang return detail tiket json
        const url = role === 'CS' ? `/api/cs/tickets/${ticketId}` : `/api/user/tickets/${ticketId}`;
-       // Note: Pastikan endpoint ini ada. Kalau tidak, status tidak bisa realtime update.
-       // Jika endpoint detail belum dibuat, bisa skip bagian ini tapi UI tidak auto-lock realtime.
        try {
          const res = await api.get(url);
          return res.data;
@@ -57,7 +47,7 @@ export function ChatInterface({ ticketId, className }: ChatInterfaceProps) {
          return null;
        }
     },
-    refetchInterval: 3000, // Cek status tiap 3 detik
+    refetchInterval: 3000, 
   });
 
   // --- 2. QUERY CHAT ---
@@ -86,11 +76,9 @@ export function ChatInterface({ ticketId, className }: ChatInterfaceProps) {
   // --- MUTATION: CLOSE TICKET ---
   const closeTicketMutation = useMutation({
     mutationFn: async () => {
-      // 1. KIRIM PESAN SISTEM TERLEBIH DAHULU (Auto-Message)
       const systemMessage = role === 'USER' ? "Chat diakhiri oleh User" : "Chat diakhiri oleh CS";
       await api.post(chatEndpoint, { message: systemMessage });
 
-      // 2. BARU PANGGIL ENDPOINT CLOSE
       const closeUrl = role === 'CS'
         ? `/api/cs/tickets/${ticketId}/close`
         : `/api/user/tickets/${ticketId}/close`;
@@ -98,7 +86,6 @@ export function ChatInterface({ ticketId, className }: ChatInterfaceProps) {
       await api.post(closeUrl);
     },
     onSuccess: () => {
-      // Invalidate agar status terupdate jadi CLOSED
       queryClient.invalidateQueries({ queryKey: ['ticket-detail', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['chat', ticketId] });
       
@@ -106,7 +93,6 @@ export function ChatInterface({ ticketId, className }: ChatInterfaceProps) {
         alert("Tiket ditutup. Kembali ke History.");
         router.push('/cs/history');
       } else {
-        // User tetap di halaman untuk melihat history chat terakhir
         alert("Tiket telah ditutup.");
       }
     },
@@ -140,7 +126,32 @@ export function ChatInterface({ ticketId, className }: ChatInterfaceProps) {
     }
   };
 
-  // Cek Status Tiket (Dari query ticket detail atau fallback props)
+  // Helper untuk mengubah URL dalam teks menjadi link <a>
+  const renderMessageWithLink = (text: string) => {
+    // Regex sederhana untuk mendeteksi URL (http/https)
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    
+    // Split pesan berdasarkan URL
+    const parts = text.split(urlRegex);
+
+    return parts.map((part, index) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a 
+            key={index} 
+            href={part} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-white underline font-bold hover:text-blue-100 break-all"
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   const isTicketClosed = ticket?.Status === 'CLOSED';
 
   return (
@@ -152,7 +163,6 @@ export function ChatInterface({ ticketId, className }: ChatInterfaceProps) {
           Live Chat {isTicketClosed && <span className="text-red-500 font-bold">(CLOSED)</span>}
         </h3>
 
-        {/* TOMBOL END CHAT (Hanya muncul jika tiket belum closed) */}
         {!isTicketClosed && (
           <Button 
             className="h-8 text-xs bg-red-600 hover:bg-red-700 text-white gap-1 px-3"
@@ -169,11 +179,8 @@ export function ChatInterface({ ticketId, className }: ChatInterfaceProps) {
 
         {messages.map((msg) => {
           const isMe = msg.SenderRole === role;
-          
-          // DETEKSI PESAN SISTEM (Berdasarkan isi pesan)
           const isSystemMessage = msg.Message.toLowerCase().includes("chat diakhiri oleh");
 
-          // TAMPILAN KHUSUS UNTUK "Chat diakhiri..."
           if (isSystemMessage) {
             return (
               <div key={msg.ID} className="flex w-full justify-center my-4">
@@ -196,7 +203,10 @@ export function ChatInterface({ ticketId, className }: ChatInterfaceProps) {
                   <span className="font-bold">{msg.SenderRole}</span>
                   <span>• {new Date(msg.CreatedAt).toLocaleTimeString()}</span>
                 </div>
-                <p className="whitespace-pre-wrap break-words">{msg.Message}</p>
+                {/* Gunakan helper renderMessageWithLink di sini */}
+                <p className="whitespace-pre-wrap break-words">
+                  {isMe ? renderMessageWithLink(msg.Message) : renderMessageWithLink(msg.Message)}
+                </p>
               </div>
             </div>
           );
@@ -204,16 +214,13 @@ export function ChatInterface({ ticketId, className }: ChatInterfaceProps) {
         <div ref={bottomRef} />
       </CardContent>
 
-      {/* FOOTER: INPUT ATAU BANNER CLOSED */}
       <div className="p-3 border-t bg-white">
         {isTicketClosed ? (
-          // JIKA CLOSED: TAMPILKAN BANNER
           <div className="bg-slate-100 border border-slate-200 text-slate-500 rounded-md p-3 text-center text-sm font-medium flex items-center justify-center gap-2">
              <LockKeyhole size={16} />
              Sesi chat ini telah berakhir. Tidak dapat mengirim pesan baru.
           </div>
         ) : (
-          // JIKA OPEN: TAMPILKAN INPUT
           <form onSubmit={handleSend} className="flex gap-2">
             <Input
               value={newMessage}
